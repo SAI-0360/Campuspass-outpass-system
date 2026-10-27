@@ -267,3 +267,104 @@ export const demoLogin = async (req, res) => {
         });
     }
 };
+
+// Update user profile
+export const updateProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User account not found.",
+            });
+        }
+
+        const { name, phone, studentProfile, staffProfile } = req.body;
+
+        if (name && name.trim()) {
+            user.name = name.trim();
+        }
+        if (phone !== undefined) {
+            user.phone = phone.trim();
+        }
+
+        if (user.role === "student" && studentProfile) {
+            if (!user.studentProfile) user.studentProfile = {};
+            if (studentProfile.hostelBlock !== undefined) user.studentProfile.hostelBlock = studentProfile.hostelBlock.trim();
+            if (studentProfile.roomNo !== undefined) user.studentProfile.roomNo = studentProfile.roomNo.trim();
+            if (studentProfile.department !== undefined) user.studentProfile.department = studentProfile.department.trim();
+            if (studentProfile.parentName !== undefined) user.studentProfile.parentName = studentProfile.parentName.trim();
+            if (studentProfile.parentPhone !== undefined) user.studentProfile.parentPhone = studentProfile.parentPhone.trim();
+            if (studentProfile.parentEmail !== undefined) user.studentProfile.parentEmail = studentProfile.parentEmail.trim().toLowerCase();
+        } else if (staffProfile) {
+            if (!user.staffProfile) user.staffProfile = {};
+            if (staffProfile.hostelAssigned !== undefined) user.staffProfile.hostelAssigned = staffProfile.hostelAssigned.trim();
+            if (staffProfile.gateNumber !== undefined) user.staffProfile.gateNumber = staffProfile.gateNumber.trim();
+        }
+
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Profile updated successfully.",
+            user,
+        });
+    } catch (error) {
+        console.error("Update Profile Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Failed to update profile.",
+        });
+    }
+};
+
+// Update user password
+export const updatePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide both current and new password.",
+            });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: "New password must be at least 6 characters long.",
+            });
+        }
+
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User account not found.",
+            });
+        }
+
+        const isMatch = await user.comparePassword(currentPassword);
+        if (!isMatch) {
+            return res.status(401).json({
+                success: false,
+                message: "Incorrect current password.",
+            });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Password changed successfully.",
+        });
+    } catch (error) {
+        console.error("Update Password Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Failed to change password.",
+        });
+    }
+};

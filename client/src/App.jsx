@@ -12,6 +12,7 @@ import OutpassHistory from "./pages/OutpassHistory";
 import WardenDashboard from "./pages/WardenDashboard";
 import GuardDashboard from "./pages/GuardDashboard";
 import ParentConsent from "./pages/ParentConsent";
+import Profile from "./pages/Profile";
 
 function App() {
     return (
@@ -84,6 +85,16 @@ function App() {
 
                     {/* Public Parent Consent Verification Portal */}
                     <Route path="/parent-consent/:token" element={<ParentConsent />} />
+
+                    {/* Universal Protected Profile Route for all roles */}
+                    <Route
+                        path="/profile"
+                        element={
+                            <ProtectedRoute allowedRoles={["student", "warden", "guard"]}>
+                                <Profile />
+                            </ProtectedRoute>
+                        }
+                    />
 
                     {/* Default redirect */}
                     <Route path="/" element={<Navigate to="/login" replace />} />

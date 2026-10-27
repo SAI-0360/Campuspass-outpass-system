@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { ShieldCheck, LogOut, FileText, PlusCircle, History, Shield } from "lucide-react";
+import { ShieldCheck, LogOut, FileText, PlusCircle, History, Shield, User } from "lucide-react";
 
 const Navbar = () => {
     const { user, logout } = useAuth();
@@ -84,29 +84,46 @@ const Navbar = () => {
                                 Gate Terminal
                             </Link>
                         )}
+
+                        {/* Universal Profile Link */}
+                        <Link
+                            to="/profile"
+                            className="px-3 py-1.5 rounded-md text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition flex items-center gap-1.5"
+                        >
+                            <User className="w-4 h-4 text-zinc-500" />
+                            Profile
+                        </Link>
                     </nav>
                 </div>
 
                 {/* Right: User Role & Logout */}
                 <div className="flex items-center gap-3">
-                    <div className="text-right hidden sm:block">
-                        <div className="text-xs font-semibold text-zinc-900 leading-tight">{user.name}</div>
-                        <div className="text-[11px] text-zinc-500 capitalize">
-                            {user.role} {user.studentProfile?.rollNo ? `(${user.studentProfile.rollNo})` : ""}
-                        </div>
-                    </div>
-
-                    <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
-                            isWarden
-                                ? "bg-purple-100 text-purple-800 border border-purple-200"
-                                : isGuard
-                                ? "bg-sky-100 text-sky-800 border border-sky-200"
-                                : "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                        }`}
+                    <Link
+                        to="/profile"
+                        title="View / Edit Profile"
+                        className="flex items-center gap-2.5 group cursor-pointer"
                     >
-                        {user.role}
-                    </span>
+                        <div className="text-right hidden sm:block">
+                            <div className="text-xs font-semibold text-zinc-900 leading-tight group-hover:text-blue-600 transition">
+                                {user.name}
+                            </div>
+                            <div className="text-[11px] text-zinc-500 capitalize">
+                                {user.role} {user.studentProfile?.rollNo ? `(${user.studentProfile.rollNo})` : ""}
+                            </div>
+                        </div>
+
+                        <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider group-hover:ring-2 group-hover:ring-offset-1 transition ${
+                                isWarden
+                                    ? "bg-purple-100 text-purple-800 border border-purple-200 group-hover:ring-purple-400"
+                                    : isGuard
+                                    ? "bg-sky-100 text-sky-800 border border-sky-200 group-hover:ring-sky-400"
+                                    : "bg-emerald-100 text-emerald-800 border border-emerald-200 group-hover:ring-emerald-400"
+                            }`}
+                        >
+                            {user.role}
+                        </span>
+                    </Link>
 
                     <button
                         onClick={handleLogout}
