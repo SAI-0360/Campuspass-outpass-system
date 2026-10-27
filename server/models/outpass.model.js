@@ -151,6 +151,9 @@ const outpassSchema = new mongoose.Schema(
             reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
             reviewedAt: { type: Date },
             remarks: { type: String, trim: true, default: "" },
+            isAcknowledged: { type: Boolean, default: false },
+            acknowledgedAt: { type: Date },
+            acknowledgedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         },
 
         // Security Gate Verification Logs

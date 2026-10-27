@@ -3,6 +3,7 @@ import {
     getAllOutpasses,
     getPendingQueue,
     reviewOutpass,
+    acknowledgeOutpass,
     getWardenStats,
 } from "../controllers/warden.controller.js";
 import {
@@ -19,5 +20,6 @@ router.get("/all", getAllOutpasses);
 router.get("/pending", getPendingQueue);
 router.get("/stats", getWardenStats);
 router.patch("/:id/review", reviewOutpass);
+router.patch("/:id/acknowledge", acknowledgeOutpass);
 
 export default router;

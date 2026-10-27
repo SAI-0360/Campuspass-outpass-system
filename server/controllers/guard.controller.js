@@ -249,6 +249,13 @@ export const confirmReturn = async (req, res) => {
         outpass.gateLog.wasLate = wasLate;
         outpass.gateLog.lateMinutes = lateMinutes;
 
+        if (wasLate) {
+            if (!outpass.wardenReview) {
+                outpass.wardenReview = {};
+            }
+            outpass.wardenReview.isAcknowledged = false;
+        }
+
         await outpass.save();
 
         const alertMessage = wasLate

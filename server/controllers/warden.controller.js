@@ -13,7 +13,13 @@ export const getAllOutpasses = async (req, res) => {
         const filter = {};
 
         // Filter by status if provided and not 'ALL'
-        if (status && status !== "ALL") {
+        if (status === "LATE" || status === "OVERDUE") {
+            const now = new Date();
+            filter.$or = [
+                { "gateLog.wasLate": true },
+                { status: "EXITED", expectedReturnTime: { $lt: now } },
+            ];
+        } else if (status && status !== "ALL") {
             filter.status = status.toUpperCase();
         }
 
@@ -132,6 +138,9 @@ export const reviewOutpass = async (req, res) => {
                 reviewedBy: wardenId,
                 reviewedAt: new Date(),
                 remarks: remarks ? remarks.trim() : "Approved by Warden.",
+                isAcknowledged: true,
+                acknowledgedAt: new Date(),
+                acknowledgedBy: wardenId,
             };
         } else {
             outpass.status = "REJECTED";
@@ -139,6 +148,9 @@ export const reviewOutpass = async (req, res) => {
                 reviewedBy: wardenId,
                 reviewedAt: new Date(),
                 remarks: remarks.trim(),
+                isAcknowledged: true,
+                acknowledgedAt: new Date(),
+                acknowledgedBy: wardenId,
             };
         }
 
@@ -162,6 +174,47 @@ export const reviewOutpass = async (req, res) => {
 };
 
 /**
+ * @desc    Mark an outpass as reviewed / acknowledged by Warden
+ * @route   PATCH /api/warden/:id/acknowledge
+ * @access  Private (Warden only)
+ */
+export const acknowledgeOutpass = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const outpass = await Outpass.findById(id);
+
+        if (!outpass) {
+            return res.status(404).json({
+                success: false,
+                message: "Outpass not found.",
+            });
+        }
+
+        if (!outpass.wardenReview) {
+            outpass.wardenReview = {};
+        }
+
+        outpass.wardenReview.isAcknowledged = true;
+        outpass.wardenReview.acknowledgedAt = new Date();
+        outpass.wardenReview.acknowledgedBy = req.user._id;
+
+        await outpass.save();
+
+        return res.status(200).json({
+            success: true,
+            message: `Outpass (${outpass.passCode || id}) marked as reviewed.`,
+            outpass,
+        });
+    } catch (error) {
+        console.error("Acknowledge Outpass Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Failed to mark outpass as reviewed",
+        });
+    }
+};
+
+/**
  * @desc    Get live metrics for Warden dashboard
  * @route   GET /api/warden/stats
  * @access  Private (Warden only)
@@ -179,6 +232,8 @@ export const getWardenStats = async (req, res) => {
             approvedCount,
             outsideCount,
             totalToday,
+            totalOutpassesCount,
+            returnedLateCount,
             currentlyOverdueOutpasses,
         ] = await Promise.all([
             Outpass.countDocuments({ status: "AWAITING_PARENT" }),
@@ -187,6 +242,8 @@ export const getWardenStats = async (req, res) => {
             Outpass.countDocuments({ status: "APPROVED" }),
             Outpass.countDocuments({ status: "EXITED" }),
             Outpass.countDocuments({ createdAt: { $gte: startOfToday } }),
+            Outpass.countDocuments({}),
+            Outpass.countDocuments({ "gateLog.wasLate": true }),
             // Students who exited and their expected return time is in the past, but they haven't returned yet
             Outpass.find({
                 status: "EXITED",
@@ -195,6 +252,8 @@ export const getWardenStats = async (req, res) => {
                 .populate("student", "name email phone studentProfile")
                 .select("passCode destination expectedReturnTime gateLog student"),
         ]);
+
+        const totalOverdue = currentlyOverdueOutpasses.length + returnedLateCount;
 
         return res.status(200).json({
             success: true,
@@ -205,7 +264,10 @@ export const getWardenStats = async (req, res) => {
                 approvedCount,
                 outsideCount,
                 totalToday,
-                overdueCount: currentlyOverdueOutpasses.length,
+                totalCount: totalOutpassesCount,
+                overdueCount: totalOverdue,
+                currentlyOverdueCount: currentlyOverdueOutpasses.length,
+                returnedLateCount,
                 currentlyOverdue: currentlyOverdueOutpasses,
             },
         });
