@@ -173,6 +173,7 @@ export const getWardenStats = async (req, res) => {
 
         // Run parallel counts for fast response
         const [
+            awaitingParentCount,
             pendingCount,
             curfewPendingCount,
             approvedCount,
@@ -180,6 +181,7 @@ export const getWardenStats = async (req, res) => {
             totalToday,
             currentlyOverdueOutpasses,
         ] = await Promise.all([
+            Outpass.countDocuments({ status: "AWAITING_PARENT" }),
             Outpass.countDocuments({ status: "PENDING" }),
             Outpass.countDocuments({ status: "PENDING", isCurfewExtension: true }),
             Outpass.countDocuments({ status: "APPROVED" }),
@@ -197,6 +199,7 @@ export const getWardenStats = async (req, res) => {
         return res.status(200).json({
             success: true,
             stats: {
+                awaitingParentCount,
                 pendingCount,
                 curfewPendingCount,
                 approvedCount,

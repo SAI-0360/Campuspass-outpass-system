@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.routes.js";
 import studentRoutes from "./routes/student.routes.js";
 import wardenRoutes from "./routes/warden.routes.js";
 import guardRoutes from "./routes/guard.routes.js";
+import parentRoutes from "./routes/parent.routes.js";
 import { notFound, errorHandler } from "./middlewares/error.middleware.js";
 
 dotenv.config();
@@ -42,6 +43,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/warden", wardenRoutes);
 app.use("/api/guard", guardRoutes);
+app.use("/api/parent", parentRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);

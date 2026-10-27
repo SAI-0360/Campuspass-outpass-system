@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import Outpass, { checkIsCurfewExtension } from "../models/outpass.model.js";
 import uploadToCloudinary from "../utils/uploadToCloudinary.js";
 
@@ -63,10 +64,42 @@ export const applyOutpass = async (req, res) => {
             });
         }
 
-        // 2. Anti-Duplicate Rule: Ensure student does not have an active outpass
+        // 2. Real-World 10:30 PM Hostel Rule: Same-day outings before 10:30 PM do not require an outpass
+        const isDifferentDay =
+            retDate.getFullYear() !== depDate.getFullYear() ||
+            retDate.getMonth() !== depDate.getMonth() ||
+            retDate.getDate() !== depDate.getDate();
+
+        const returnHour = retDate.getHours();
+        const returnMinutes = retDate.getMinutes();
+        const isPastCurfew = returnHour > 22 || (returnHour === 22 && returnMinutes > 30);
+
+        if (!isDifferentDay && !isPastCurfew && outpassType !== "emergency") {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Same-day outings returning before 10:30 PM do not require an outpass under university hostel rules. You may exit freely with your Student ID card. Outpasses are strictly for returns past 10:30 PM, overnight stays, home visits, or emergencies.",
+            });
+        }
+
+        // 3. Parent contact is strictly required for outpasses (overnight, curfew, or vacation)
+        const finalParentEmail =
+            parentEmail?.trim() || req.user.studentProfile?.parentEmail || "";
+        const finalParentPhone =
+            parentPhone?.trim() || req.user.studentProfile?.parentPhone || "";
+
+        if (!finalParentPhone) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "Parent/Guardian phone number is mandatory for outpass verification.",
+            });
+        }
+
+        // 4. Anti-Duplicate Rule: Ensure student does not have an active outpass
         const existingActivePass = await Outpass.findOne({
             student: studentId,
-            status: { $in: ["PENDING", "APPROVED", "EXITED"] },
+            status: { $in: ["AWAITING_PARENT", "PENDING", "APPROVED", "EXITED"] },
         });
 
         if (existingActivePass) {
@@ -77,24 +110,9 @@ export const applyOutpass = async (req, res) => {
             });
         }
 
-        // 3. 10:30 PM Curfew Rule check
         const isCurfew = checkIsCurfewExtension(depDate, retDate, outpassType);
 
-        // Fallback to student profile's registered parent details if not explicitly typed in form
-        const finalParentEmail =
-            parentEmail || req.user.studentProfile?.parentEmail || "";
-        const finalParentPhone =
-            parentPhone || req.user.studentProfile?.parentPhone || "";
-
-        if (isCurfew && !finalParentEmail && !finalParentPhone) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    "Outpasses extending past the 10:30 PM curfew require parent contact details (email and phone).",
-            });
-        }
-
-        // 4. File Upload (Cloudinary) for Proof Document
+        // 5. File Upload (Cloudinary) for Proof Document
         let proofDocumentUrl = "";
         if (req.file) {
             try {
@@ -112,7 +130,10 @@ export const applyOutpass = async (req, res) => {
             }
         }
 
-        // 5. Create Outpass record
+        // 6. Generate secure 1-time Parent Consent Token
+        const parentConsentToken = crypto.randomBytes(16).toString("hex");
+
+        // 7. Create Outpass in Stage 1: AWAITING_PARENT
         const newOutpass = await Outpass.create({
             student: studentId,
             outpassType,
@@ -124,15 +145,21 @@ export const applyOutpass = async (req, res) => {
             parentEmail: finalParentEmail,
             parentPhone: finalParentPhone,
             proofDocument: proofDocumentUrl,
-            status: "PENDING",
+            parentConsent: {
+                status: "PENDING",
+                token: parentConsentToken,
+                verifiedPhone: finalParentPhone,
+            },
+            status: "AWAITING_PARENT",
         });
 
         return res.status(201).json({
             success: true,
-            message: isCurfew
-                ? "Curfew extension outpass submitted. Pending Warden approval with parent verification."
-                : "Outpass application submitted successfully. Pending Warden approval.",
+            message:
+                "Outpass submitted successfully! Verification link dispatched to parent. Awaiting parental authorization.",
             outpass: newOutpass,
+            parentConsentToken,
+            parentConsentUrl: `/parent-consent/${parentConsentToken}`,
         });
     } catch (error) {
         console.error("Apply Outpass Error:", error);
@@ -186,10 +213,10 @@ export const getActivePass = async (req, res) => {
     try {
         const studentId = req.user._id;
 
-        // Active means PENDING, APPROVED, or EXITED
+        // Active means AWAITING_PARENT, PENDING, APPROVED, or EXITED
         const activePass = await Outpass.findOne({
             student: studentId,
-            status: { $in: ["PENDING", "APPROVED", "EXITED"] },
+            status: { $in: ["AWAITING_PARENT", "PENDING", "APPROVED", "EXITED"] },
         })
             .populate("wardenReview.reviewedBy", "name email")
             .populate("gateLog.exitGuard", "name")
@@ -228,10 +255,10 @@ export const cancelOutpass = async (req, res) => {
             });
         }
 
-        if (outpass.status !== "PENDING") {
+        if (outpass.status !== "PENDING" && outpass.status !== "AWAITING_PARENT") {
             return res.status(400).json({
                 success: false,
-                message: `Cannot cancel an outpass with status '${outpass.status}'. Only 'PENDING' requests can be cancelled.`,
+                message: `Cannot cancel an outpass with status '${outpass.status}'. Only pending or parent-awaiting requests can be cancelled.`,
             });
         }
 

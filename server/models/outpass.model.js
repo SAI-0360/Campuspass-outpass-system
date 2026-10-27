@@ -9,7 +9,11 @@ export const checkIsCurfewExtension = (
     expectedReturnTime,
     outpassType
 ) => {
-    if (outpassType === "night_out" || outpassType === "weekend_home") {
+    if (
+        outpassType === "curfew_extension" ||
+        outpassType === "night_out" ||
+        outpassType === "weekend_home"
+    ) {
         return true;
     }
 
@@ -55,7 +59,13 @@ const outpassSchema = new mongoose.Schema(
         outpassType: {
             type: String,
             enum: {
-                values: ["day_out", "night_out", "weekend_home", "emergency"],
+                values: [
+                    "curfew_extension",
+                    "night_out",
+                    "weekend_home",
+                    "emergency",
+                    "day_out",
+                ],
                 message: "{VALUE} is not a valid outpass type",
             },
             required: [true, "Outpass type is required"],
@@ -100,11 +110,29 @@ const outpassSchema = new mongoose.Schema(
             default: "",
         },
 
-        // Lifecycle Status
+        // Stage 1: Parent Verification Flow
+        parentConsent: {
+            status: {
+                type: String,
+                enum: ["PENDING", "APPROVED", "DENIED", "NOT_REQUIRED"],
+                default: "PENDING",
+            },
+            token: {
+                type: String,
+                sparse: true,
+                trim: true,
+            },
+            verifiedAt: { type: Date },
+            parentRemarks: { type: String, default: "", trim: true },
+            verifiedPhone: { type: String, default: "", trim: true },
+        },
+
+        // Lifecycle Status (Stage 1 -> Stage 2 -> Gate)
         status: {
             type: String,
             enum: {
                 values: [
+                    "AWAITING_PARENT",
                     "PENDING",
                     "APPROVED",
                     "REJECTED",
@@ -114,7 +142,7 @@ const outpassSchema = new mongoose.Schema(
                 ],
                 message: "{VALUE} is not a valid status",
             },
-            default: "PENDING",
+            default: "AWAITING_PARENT",
             index: true,
         },
 
