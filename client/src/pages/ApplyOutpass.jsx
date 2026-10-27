@@ -15,13 +15,18 @@ const ApplyOutpass = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
 
-    // Default departure: 10 mins from now; return: 4 hours from now in local time
+    // Default departure: 15 mins from now; return: 11:15 PM today (Curfew Extension)
     const now = new Date();
-    const defaultDep = toLocalISOString(new Date(now.getTime() + 10 * 60 * 1000));
-    const defaultRet = toLocalISOString(new Date(now.getTime() + 4 * 60 * 60 * 1000));
+    const defaultDep = toLocalISOString(new Date(now.getTime() + 15 * 60 * 1000));
+    const defaultRetDate = new Date(now);
+    defaultRetDate.setHours(23, 15, 0, 0);
+    if (now.getHours() >= 23 && now.getMinutes() >= 15) {
+        defaultRetDate.setDate(defaultRetDate.getDate() + 1);
+    }
+    const defaultRet = toLocalISOString(defaultRetDate);
 
     const [form, setForm] = useState({
-        outpassType: "day_out",
+        outpassType: "curfew_extension",
         destination: "",
         reason: "",
         departureTime: defaultDep,
@@ -31,7 +36,8 @@ const ApplyOutpass = () => {
     });
 
     const [file, setFile] = useState(null);
-    const [isCurfew, setIsCurfew] = useState(false);
+    const [isCurfew, setIsCurfew] = useState(true);
+    const [isDaytimeFree, setIsDaytimeFree] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -46,7 +52,7 @@ const ApplyOutpass = () => {
         }
     }, [user]);
 
-    // Live 10:30 PM Curfew Detection
+    // Live 10:30 PM Curfew Detection & Daytime Rule Check
     useEffect(() => {
         if (!form.expectedReturnTime || !form.departureTime) return;
 
@@ -62,8 +68,16 @@ const ApplyOutpass = () => {
         const returnMinutes = ret.getMinutes();
         const isPastCurfew = returnHour > 22 || (returnHour === 22 && returnMinutes > 30);
 
+        // Same-day outings before 10:30 PM are free with Student ID card
+        const daytime = !isDifferentDay && !isPastCurfew && form.outpassType !== "emergency";
+        setIsDaytimeFree(daytime);
+
         const curfewRequired =
-            isDifferentDay || isPastCurfew || form.outpassType === "night_out" || form.outpassType === "weekend_home";
+            isDifferentDay ||
+            isPastCurfew ||
+            form.outpassType === "curfew_extension" ||
+            form.outpassType === "night_out" ||
+            form.outpassType === "weekend_home";
 
         setIsCurfew(curfewRequired);
     }, [form.departureTime, form.expectedReturnTime, form.outpassType]);
@@ -135,6 +149,17 @@ const ApplyOutpass = () => {
                     </div>
                 )}
 
+                {/* 2-Stage Flow Notice */}
+                <div className="mb-4 p-3 bg-zinc-50 border border-zinc-200 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-600">
+                    <span className="font-bold text-zinc-900 flex items-center gap-1.5">
+                        <Clock className="w-4 h-4 text-zinc-700" />
+                        2-Stage Security Clearance:
+                    </span>
+                    <span className="font-medium text-zinc-600">
+                        1. Parent Authorization Link ──► 2. Warden Final Review
+                    </span>
+                </div>
+
                 <div className="bg-white p-6 sm:p-8 rounded-xl border border-zinc-200 shadow-xs">
                     <form className="space-y-4" onSubmit={handleSubmit}>
                         {/* Outpass Type */}
@@ -148,10 +173,10 @@ const ApplyOutpass = () => {
                                 onChange={handleChange}
                                 className="w-full px-3 py-2 border border-zinc-300 rounded-lg text-sm text-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-900 bg-white"
                             >
-                                <option value="day_out">Day Out (Same-Day Return)</option>
-                                <option value="night_out">Night Out (Curfew Exemption)</option>
-                                <option value="weekend_home">Weekend Home Visit</option>
-                                <option value="emergency">Emergency Leave</option>
+                                <option value="curfew_extension">🌙 Curfew Extension (Return after 10:30 PM cutoff)</option>
+                                <option value="night_out">🛌 Night Out (Overnight Stay Outside Campus)</option>
+                                <option value="weekend_home">🏡 Weekend Home Visit / Vacation</option>
+                                <option value="emergency">🚨 Emergency Leave</option>
                             </select>
                         </div>
 
@@ -217,15 +242,29 @@ const ApplyOutpass = () => {
                             </div>
                         </div>
 
+                        {/* Daytime Free Exit Rule Alert */}
+                        {isDaytimeFree && (
+                            <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-lg flex items-start gap-2.5 text-xs text-sky-900">
+                                <AlertCircle className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <span className="font-bold block">ℹ️ No Outpass Required for Daytime Outings</span>
+                                    <span>
+                                        Under university hostel rules, same-day outings returning before 10:30 PM do not require an outpass.
+                                        You may exit and re-enter campus freely using your Student ID card. Outpasses are strictly required for returns past 10:30 PM, overnight stays, or home visits.
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Live Curfew Notice */}
-                        {isCurfew && (
+                        {isCurfew && !isDaytimeFree && (
                             <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-lg">
                                 <div className="flex items-start gap-2">
                                     <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                                     <div className="text-xs text-amber-800">
                                         <span className="font-bold block">10:30 PM Hostel Curfew Rule Applied</span>
                                         Your expected return is past the 10:30 PM entry cutoff or on another day. This
-                                        request will be flagged for Warden verification. Parent contact info is required.
+                                        request will require Parent Authorization before it reaches the Warden. Parent contact info is required.
                                     </div>
                                 </div>
 
@@ -287,10 +326,14 @@ const ApplyOutpass = () => {
 
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || isDaytimeFree}
                             className="w-full flex justify-center py-2.5 px-4 rounded-lg shadow-xs text-sm font-bold text-white bg-zinc-900 hover:bg-zinc-800 transition disabled:opacity-50 mt-4"
                         >
-                            {loading ? "Submitting Application..." : "Submit Outpass Request"}
+                            {isDaytimeFree
+                                ? "No Outpass Needed (Return before 10:30 PM)"
+                                : loading
+                                ? "Submitting Application..."
+                                : "Submit for Parent Authorization"}
                         </button>
                     </form>
                 </div>

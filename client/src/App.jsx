@@ -11,6 +11,7 @@ import ApplyOutpass from "./pages/ApplyOutpass";
 import OutpassHistory from "./pages/OutpassHistory";
 import WardenDashboard from "./pages/WardenDashboard";
 import GuardDashboard from "./pages/GuardDashboard";
+import ParentConsent from "./pages/ParentConsent";
 
 function App() {
     return (
@@ -80,6 +81,9 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
+
+                    {/* Public Parent Consent Verification Portal */}
+                    <Route path="/parent-consent/:token" element={<ParentConsent />} />
 
                     {/* Default redirect */}
                     <Route path="/" element={<Navigate to="/login" replace />} />
