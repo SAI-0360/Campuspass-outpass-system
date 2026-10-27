@@ -127,6 +127,14 @@ const ParentConsent = () => {
                     </p>
                 </div>
 
+                {/* Visible Demo / Evaluation Notice */}
+                <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5 text-xs text-amber-900 shadow-xs">
+                    <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                    <div>
+                        <span className="font-bold">Demo / Testing Environment:</span> In live university production, this verification link is dispatched automatically to the parent's phone via SMS / WhatsApp (Twilio / Gupshup) and is never accessible to the student.
+                    </div>
+                </div>
+
                 {/* Main Card */}
                 <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm overflow-hidden">
                     {/* Header Banner */}

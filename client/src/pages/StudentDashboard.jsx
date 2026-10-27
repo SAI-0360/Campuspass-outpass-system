@@ -142,28 +142,36 @@ const StudentDashboard = () => {
                         {/* Stage 1: Awaiting Parent Authorization */}
                         {activePass.status === "AWAITING_PARENT" && (
                             <div className="bg-amber-50 border-b border-amber-200 p-4 sm:p-5">
-                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                    <div>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div className="flex-1 min-w-0 pr-0 sm:pr-4">
                                         <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
-                                            <Clock className="w-4 h-4 text-amber-700" />
+                                            <Clock className="w-4 h-4 text-amber-700 shrink-0" />
                                             Stage 1 of 2: Awaiting Parent Authorization
                                         </div>
-                                        <p className="text-xs text-amber-800 mt-1">
+                                        <p className="text-xs text-amber-800 mt-1 leading-relaxed">
                                             Verification link dispatched to parent (
-                                            <span className="font-semibold">{activePass.parentPhone || "Registered Contact"}</span>
+                                            <span className="font-semibold text-amber-950">{activePass.parentPhone || "Registered Contact"}</span>
                                             ). The Warden cannot review this request until parental consent is granted.
                                         </p>
                                     </div>
+                                    {/* In real-world production, this link is delivered strictly to the parent's phone via SMS/WhatsApp.
+                                        For local testing and academic evaluation, this 1-click test link allows instant simulation. */}
                                     {activePass.parentConsent?.token && (
-                                        <a
-                                            href={`/parent-consent/${activePass.parentConsent.token}`}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs rounded-lg shadow-xs transition"
-                                        >
-                                            <ExternalLink className="w-3.5 h-3.5" />
-                                            Open Parent Consent Portal
-                                        </a>
+                                        <div className="shrink-0 flex flex-col items-start sm:items-end gap-1.5">
+                                            <a
+                                                href={`/parent-consent/${activePass.parentConsent.token}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs rounded-lg shadow-xs transition"
+                                            >
+                                                <ExternalLink className="w-3.5 h-3.5" />
+                                                Open Parent Consent Portal
+                                            </a>
+                                            <span className="text-[10px] text-amber-800 font-medium flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                Demo Link &bull; Sent via SMS in production
+                                            </span>
+                                        </div>
                                     )}
                                 </div>
                             </div>

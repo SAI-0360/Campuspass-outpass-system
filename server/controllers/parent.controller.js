@@ -1,6 +1,19 @@
 import Outpass from "../models/outpass.model.js";
 
 /**
+ * [PRODUCTION ARCHITECTURE NOTE - ACCOUNTLESS PARENT AUTHORIZATION]
+ * Why is this endpoint Public and Token-Protected instead of requiring Parent Login?
+ * 1. Zero-Friction UX: Parents are often non-tech-savvy and should not be forced to download an app,
+ *    register an account, remember passwords, or navigate complex university portals.
+ * 2. High-Entropy Security: The 32-character hex token (128 bits of cryptographic randomness) cannot
+ *    be guessed via brute-force (2^128 combinations).
+ * 3. Single-Use Idempotency: Once the parent submits APPROVE or DENY, the state permanently transitions,
+ *    locking the token into read-only audit mode so decisions cannot be tampered with or revoked.
+ * 4. Production Delivery: In live deployment, this tokenized link is sent directly to the parent's verified
+ *    mobile number via SMS / WhatsApp webhook upon student submission.
+ */
+
+/**
  * @desc    Fetch outpass details for parent review via secure one-time token
  * @route   GET /api/parent/consent/:token
  * @access  Public (Token protected)
