@@ -1,0 +1,110 @@
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { ShieldCheck, LogOut, FileText, PlusCircle, History } from "lucide-react";
+
+const Navbar = () => {
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate("/login");
+    };
+
+    if (!user) return null;
+
+    const isStudent = user.role === "student";
+    const isWarden = user.role === "warden";
+
+    return (
+        <header className="bg-white border-b border-zinc-200 sticky top-0 z-30 shadow-xs">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+                {/* Brand / Logo */}
+                <div className="flex items-center gap-6">
+                    <Link to={isWarden ? "/warden" : "/dashboard"} className="flex items-center gap-2 group">
+                        <div className="w-9 h-9 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold text-base shadow-xs group-hover:bg-zinc-800 transition">
+                            CP
+                        </div>
+                        <div>
+                            <span className="font-bold text-base tracking-tight text-zinc-900 block leading-tight">
+                                CampusPass
+                            </span>
+                            <span className="text-[10px] text-zinc-400 uppercase font-semibold tracking-wider">
+                                Hostel Outpass System
+                            </span>
+                        </div>
+                    </Link>
+
+                    {/* Navigation links */}
+                    <nav className="hidden md:flex items-center gap-1 text-sm font-medium">
+                        {isStudent && (
+                            <>
+                                <Link
+                                    to="/dashboard"
+                                    className="px-3 py-1.5 rounded-md text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition flex items-center gap-1.5"
+                                >
+                                    <FileText className="w-4 h-4 text-zinc-500" />
+                                    Active Pass
+                                </Link>
+                                <Link
+                                    to="/apply"
+                                    className="px-3 py-1.5 rounded-md text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition flex items-center gap-1.5"
+                                >
+                                    <PlusCircle className="w-4 h-4 text-zinc-500" />
+                                    Apply Outpass
+                                </Link>
+                                <Link
+                                    to="/history"
+                                    className="px-3 py-1.5 rounded-md text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition flex items-center gap-1.5"
+                                >
+                                    <History className="w-4 h-4 text-zinc-500" />
+                                    History
+                                </Link>
+                            </>
+                        )}
+                        {isWarden && (
+                            <Link
+                                to="/warden"
+                                className="px-3 py-1.5 rounded-md text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition flex items-center gap-1.5"
+                            >
+                                <ShieldCheck className="w-4 h-4 text-zinc-500" />
+                                Warden Review Queue
+                            </Link>
+                        )}
+                    </nav>
+                </div>
+
+                {/* Right: User Role & Logout */}
+                <div className="flex items-center gap-3">
+                    <div className="text-right hidden sm:block">
+                        <div className="text-xs font-semibold text-zinc-900 leading-tight">{user.name}</div>
+                        <div className="text-[11px] text-zinc-500 capitalize">
+                            {user.role} {user.studentProfile?.rollNo ? `(${user.studentProfile.rollNo})` : ""}
+                        </div>
+                    </div>
+
+                    <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
+                            isWarden
+                                ? "bg-purple-100 text-purple-800 border border-purple-200"
+                                : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                        }`}
+                    >
+                        {user.role}
+                    </span>
+
+                    <button
+                        onClick={handleLogout}
+                        title="Logout"
+                        className="p-2 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition ml-1"
+                    >
+                        <LogOut className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+        </header>
+    );
+};
+
+export default Navbar;
