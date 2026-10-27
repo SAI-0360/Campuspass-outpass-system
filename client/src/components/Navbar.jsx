@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { ShieldCheck, LogOut, FileText, PlusCircle, History } from "lucide-react";
+import { ShieldCheck, LogOut, FileText, PlusCircle, History, Shield } from "lucide-react";
 
 const Navbar = () => {
     const { user, logout } = useAuth();
@@ -16,13 +16,16 @@ const Navbar = () => {
 
     const isStudent = user.role === "student";
     const isWarden = user.role === "warden";
+    const isGuard = user.role === "guard";
+
+    const homePath = isWarden ? "/warden" : isGuard ? "/guard" : "/dashboard";
 
     return (
         <header className="bg-white border-b border-zinc-200 sticky top-0 z-30 shadow-xs">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
                 {/* Brand / Logo */}
                 <div className="flex items-center gap-6">
-                    <Link to={isWarden ? "/warden" : "/dashboard"} className="flex items-center gap-2 group">
+                    <Link to={homePath} className="flex items-center gap-2 group">
                         <div className="w-9 h-9 rounded-lg bg-zinc-900 text-white flex items-center justify-center font-bold text-base shadow-xs group-hover:bg-zinc-800 transition">
                             CP
                         </div>
@@ -72,6 +75,15 @@ const Navbar = () => {
                                 Warden Review Queue
                             </Link>
                         )}
+                        {isGuard && (
+                            <Link
+                                to="/guard"
+                                className="px-3 py-1.5 rounded-md text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition flex items-center gap-1.5"
+                            >
+                                <Shield className="w-4 h-4 text-zinc-500" />
+                                Gate Terminal
+                            </Link>
+                        )}
                     </nav>
                 </div>
 
@@ -88,6 +100,8 @@ const Navbar = () => {
                         className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
                             isWarden
                                 ? "bg-purple-100 text-purple-800 border border-purple-200"
+                                : isGuard
+                                ? "bg-sky-100 text-sky-800 border border-sky-200"
                                 : "bg-emerald-100 text-emerald-800 border border-emerald-200"
                         }`}
                     >

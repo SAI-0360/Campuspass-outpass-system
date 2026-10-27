@@ -10,6 +10,7 @@ import StudentDashboard from "./pages/StudentDashboard";
 import ApplyOutpass from "./pages/ApplyOutpass";
 import OutpassHistory from "./pages/OutpassHistory";
 import WardenDashboard from "./pages/WardenDashboard";
+import GuardDashboard from "./pages/GuardDashboard";
 
 function App() {
     return (
@@ -66,6 +67,16 @@ function App() {
                         element={
                             <ProtectedRoute allowedRoles={["warden"]}>
                                 <WardenDashboard />
+                            </ProtectedRoute>
+                        }
+                    />
+
+                    {/* Security Guard Protected Routes */}
+                    <Route
+                        path="/guard"
+                        element={
+                            <ProtectedRoute allowedRoles={["guard"]}>
+                                <GuardDashboard />
                             </ProtectedRoute>
                         }
                     />

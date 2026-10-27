@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { ShieldCheck, ArrowRight, UserCheck, KeyRound } from "lucide-react";
+import { ShieldCheck, UserCheck, Shield } from "lucide-react";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -20,6 +20,16 @@ const Login = () => {
         setError("");
     };
 
+    const navigateRole = (role) => {
+        if (role === "warden") {
+            navigate("/warden", { replace: true });
+        } else if (role === "guard") {
+            navigate("/guard", { replace: true });
+        } else {
+            navigate("/dashboard", { replace: true });
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -27,11 +37,7 @@ const Login = () => {
 
         try {
             const data = await login(form.email, form.password);
-            if (data.user?.role === "warden") {
-                navigate("/warden", { replace: true });
-            } else {
-                navigate("/dashboard", { replace: true });
-            }
+            navigateRole(data.user?.role);
         } catch (err) {
             setError(err.response?.data?.message || "Invalid email or password.");
         } finally {
@@ -44,11 +50,7 @@ const Login = () => {
         setError("");
         try {
             const data = await demoLogin(role);
-            if (data.user?.role === "warden") {
-                navigate("/warden", { replace: true });
-            } else {
-                navigate("/dashboard", { replace: true });
-            }
+            navigateRole(data.user?.role);
         } catch (err) {
             setError(err.response?.data?.message || `Failed to log in as demo ${role}.`);
         } finally {
@@ -125,24 +127,33 @@ const Login = () => {
                         <span className="block text-[11px] font-bold text-zinc-400 uppercase tracking-wider text-center mb-3">
                             ⚡ 1-Click Evaluation Logins
                         </span>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-1.5">
                             <button
                                 type="button"
                                 onClick={() => handleDemo("student")}
                                 disabled={!!demoLoading}
-                                className="flex items-center justify-center gap-1.5 py-2 px-3 bg-zinc-50 hover:bg-zinc-100 border border-zinc-300 rounded-lg text-xs font-semibold text-zinc-800 transition disabled:opacity-50"
+                                className="flex flex-col items-center justify-center gap-1 py-2 px-1 bg-zinc-50 hover:bg-zinc-100 border border-zinc-300 rounded-lg text-[11px] font-bold text-zinc-800 transition disabled:opacity-50"
                             >
-                                <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
-                                {demoLoading === "student" ? "Logging in..." : "Demo Student"}
+                                <UserCheck className="w-4 h-4 text-emerald-600" />
+                                {demoLoading === "student" ? "..." : "Student"}
                             </button>
                             <button
                                 type="button"
                                 onClick={() => handleDemo("warden")}
                                 disabled={!!demoLoading}
-                                className="flex items-center justify-center gap-1.5 py-2 px-3 bg-zinc-50 hover:bg-zinc-100 border border-zinc-300 rounded-lg text-xs font-semibold text-zinc-800 transition disabled:opacity-50"
+                                className="flex flex-col items-center justify-center gap-1 py-2 px-1 bg-zinc-50 hover:bg-zinc-100 border border-zinc-300 rounded-lg text-[11px] font-bold text-zinc-800 transition disabled:opacity-50"
                             >
-                                <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
-                                {demoLoading === "warden" ? "Logging in..." : "Demo Warden"}
+                                <ShieldCheck className="w-4 h-4 text-purple-600" />
+                                {demoLoading === "warden" ? "..." : "Warden"}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleDemo("guard")}
+                                disabled={!!demoLoading}
+                                className="flex flex-col items-center justify-center gap-1 py-2 px-1 bg-zinc-50 hover:bg-zinc-100 border border-zinc-300 rounded-lg text-[11px] font-bold text-zinc-800 transition disabled:opacity-50"
+                            >
+                                <Shield className="w-4 h-4 text-sky-600" />
+                                {demoLoading === "guard" ? "..." : "Guard"}
                             </button>
                         </div>
                     </div>
