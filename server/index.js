@@ -2,32 +2,47 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import connectDB from "./config/db.js";
+import authRoutes from "./routes/auth.routes.js";
+import studentRoutes from "./routes/student.routes.js";
+import { notFound, errorHandler } from "./middlewares/error.middleware.js";
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 7000;
 
-// Middlewares
+// Connect to MongoDB
+connectDB();
+
+// Global Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(
-  cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    credentials: true,
-  })
+    cors({
+        origin: process.env.CLIENT_URL || "http://localhost:5175",
+        credentials: true,
+    })
 );
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-    message: "CampusPass API server is running smoothly",
-    timestamp: new Date().toISOString(),
-  });
+    res.status(200).json({
+        status: "ok",
+        message: "CampusPass API server is running smoothly",
+        timestamp: new Date().toISOString(),
+    });
 });
 
+// Mount Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/student", studentRoutes);
+
+// Error Handling Middlewares
+app.use(notFound);
+app.use(errorHandler);
+
 app.listen(PORT, () => {
-  console.log(`[CampusPass Server] running on http://localhost:${PORT}`);
+    console.log(`[CampusPass Server] running on http://localhost:${PORT}`);
 });
