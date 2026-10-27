@@ -152,65 +152,103 @@ export const getMe = async (req, res) => {
     });
 };
 
-// Demo quick-login for evaluation & testing
+// Demo quick-login with multi-profile support for evaluation & testing
 export const demoLogin = async (req, res) => {
     try {
-        const { role } = req.body;
+        const { role, profileId } = req.body;
         if (!role || !["student", "warden", "guard"].includes(role)) {
-            return res
-                .status(400)
-                .json({
-                    success: false,
-                    message:
-                        "Valid demo role is required (student, warden, guard).",
-                });
+            return res.status(400).json({
+                success: false,
+                message: "Valid demo role is required (student, warden, guard).",
+            });
         }
 
-        const demoEmail = `demo.${role}@campuspass.edu`;
-        let user = await User.findOne({ email: demoEmail });
+        const demoProfiles = {
+            student1: {
+                name: "Rahul Verma",
+                email: "demo.student@campuspass.edu",
+                password: "password123",
+                role: "student",
+                phone: "9876543210",
+                studentProfile: {
+                    rollNo: "22CSE104",
+                    hostelBlock: "BH-2 (Boys Hostel 2)",
+                    roomNo: "304",
+                    department: "Computer Science",
+                    parentName: "Sanjay Verma",
+                    parentPhone: "9811223344",
+                    parentEmail: "parent.verma@example.com",
+                },
+            },
+            student2: {
+                name: "Ananya Sharma",
+                email: "demo.student2@campuspass.edu",
+                password: "password123",
+                role: "student",
+                phone: "9876543211",
+                studentProfile: {
+                    rollNo: "22ECE205",
+                    hostelBlock: "GH-1 (Girls Hostel 1)",
+                    roomNo: "212",
+                    department: "Electronics & Comm.",
+                    parentName: "Mrs. Sunita Sharma",
+                    parentPhone: "9822334455",
+                    parentEmail: "sunita.sharma@example.com",
+                },
+            },
+            student3: {
+                name: "Rohan Gupta",
+                email: "demo.student3@campuspass.edu",
+                password: "password123",
+                role: "student",
+                phone: "9876543212",
+                studentProfile: {
+                    rollNo: "22MECH310",
+                    hostelBlock: "BH-2 (Boys Hostel 2)",
+                    roomNo: "108",
+                    department: "Mechanical Engineering",
+                    parentName: "Rajesh Gupta",
+                    parentPhone: "9833445566",
+                    parentEmail: "rajesh.gupta@example.com",
+                },
+            },
+            warden: {
+                name: "Dr. A. K. Sharma",
+                email: "demo.warden@campuspass.edu",
+                password: "password123",
+                role: "warden",
+                phone: "9876500001",
+                staffProfile: {
+                    hostelAssigned: "BH-2 & GH-1",
+                },
+            },
+            guard: {
+                name: "Officer Vikram Singh",
+                email: "demo.guard@campuspass.edu",
+                password: "password123",
+                role: "guard",
+                phone: "9876500002",
+                staffProfile: {
+                    gateNumber: "Gate 1 (Main Campus Gate)",
+                },
+            },
+        };
+
+        const profileKey = role === "student" ? profileId || "student1" : role;
+        const profileData = demoProfiles[profileKey];
+
+        if (!profileData) {
+            return res.status(400).json({
+                success: false,
+                message: `Unknown demo profile '${profileKey}'.`,
+            });
+        }
+
+        let user = await User.findOne({ email: profileData.email });
 
         // Auto-seed demo user if not present
         if (!user) {
-            const demoUsers = {
-                student: {
-                    name: "Rahul Verma",
-                    email: demoEmail,
-                    password: "password123",
-                    role: "student",
-                    phone: "9876543210",
-                    studentProfile: {
-                        rollNo: "22CSE104",
-                        hostelBlock: "BH-2 (Boys Hostel 2)",
-                        roomNo: "304",
-                        department: "Computer Science",
-                        parentName: "Sanjay Verma",
-                        parentPhone: "9811223344",
-                        parentEmail: "parent.verma@example.com",
-                    },
-                },
-                warden: {
-                    name: "Dr. A. K. Sharma",
-                    email: demoEmail,
-                    password: "password123",
-                    role: "warden",
-                    phone: "9876500001",
-                    staffProfile: {
-                        hostelAssigned: "BH-2 & GH-1",
-                    },
-                },
-                guard: {
-                    name: "Officer Vikram Singh",
-                    email: demoEmail,
-                    password: "password123",
-                    role: "guard",
-                    phone: "9876500002",
-                    staffProfile: {
-                        gateNumber: "Gate 1 (Main Campus Gate)",
-                    },
-                },
-            };
-
-            user = await User.create(demoUsers[role]);
+            user = await User.create(profileData);
         }
 
         const token = generateToken(user._id);
@@ -218,16 +256,14 @@ export const demoLogin = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: `Logged in as demo ${role}`,
+            message: `Logged in as demo ${user.name} (${user.role})`,
             user,
         });
     } catch (error) {
         console.error("Demo Login Error:", error);
-        return res
-            .status(500)
-            .json({
-                success: false,
-                message: error.message || "Demo login failed",
-            });
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Demo login failed",
+        });
     }
 };

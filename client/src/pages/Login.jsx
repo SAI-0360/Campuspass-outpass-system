@@ -1,7 +1,31 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { ShieldCheck, UserCheck, Shield } from "lucide-react";
+import { ShieldCheck, UserCheck, Shield, ChevronDown } from "lucide-react";
+
+const studentProfiles = [
+    {
+        id: "student1",
+        name: "Rahul Verma",
+        rollNo: "22CSE104",
+        hostel: "BH-2 Boys Hostel",
+        dept: "Computer Science",
+    },
+    {
+        id: "student2",
+        name: "Ananya Sharma",
+        rollNo: "22ECE205",
+        hostel: "GH-1 Girls Hostel",
+        dept: "Electronics & Comm.",
+    },
+    {
+        id: "student3",
+        name: "Rohan Gupta",
+        rollNo: "22MECH310",
+        hostel: "BH-2 Boys Hostel",
+        dept: "Mechanical Eng.",
+    },
+];
 
 const Login = () => {
     const navigate = useNavigate();
@@ -13,6 +37,7 @@ const Login = () => {
     });
     const [loading, setLoading] = useState(false);
     const [demoLoading, setDemoLoading] = useState("");
+    const [showStudentMenu, setShowStudentMenu] = useState(false);
     const [error, setError] = useState("");
 
     const handleChange = (e) => {
@@ -53,6 +78,20 @@ const Login = () => {
             navigateRole(data.user?.role);
         } catch (err) {
             setError(err.response?.data?.message || `Failed to log in as demo ${role}.`);
+        } finally {
+            setDemoLoading("");
+        }
+    };
+
+    const handleStudentDemo = async (profileId) => {
+        setShowStudentMenu(false);
+        setDemoLoading(profileId);
+        setError("");
+        try {
+            const data = await demoLogin("student", profileId);
+            navigateRole(data.user?.role);
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to log in as demo student.");
         } finally {
             setDemoLoading("");
         }
@@ -128,15 +167,55 @@ const Login = () => {
                             ⚡ 1-Click Evaluation Logins
                         </span>
                         <div className="grid grid-cols-3 gap-1.5">
-                            <button
-                                type="button"
-                                onClick={() => handleDemo("student")}
-                                disabled={!!demoLoading}
-                                className="flex flex-col items-center justify-center gap-1 py-2 px-1 bg-zinc-50 hover:bg-zinc-100 border border-zinc-300 rounded-lg text-[11px] font-bold text-zinc-800 transition disabled:opacity-50"
-                            >
-                                <UserCheck className="w-4 h-4 text-emerald-600" />
-                                {demoLoading === "student" ? "..." : "Student"}
-                            </button>
+                            {/* Student Dropdown Button with 3 Profiles */}
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowStudentMenu(!showStudentMenu)}
+                                    disabled={!!demoLoading}
+                                    className="w-full flex flex-col items-center justify-center gap-1 py-2 px-1 bg-zinc-50 hover:bg-zinc-100 border border-zinc-300 rounded-lg text-[11px] font-bold text-zinc-800 transition disabled:opacity-50 cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-1">
+                                        <UserCheck className="w-4 h-4 text-emerald-600" />
+                                        <ChevronDown className="w-3 h-3 text-zinc-400" />
+                                    </div>
+                                    {demoLoading && demoLoading.startsWith("student") ? "..." : "Student ▾"}
+                                </button>
+
+                                {showStudentMenu && (
+                                    <>
+                                        <div
+                                            className="fixed inset-0 z-20"
+                                            onClick={() => setShowStudentMenu(false)}
+                                        />
+                                        <div className="absolute left-0 top-full mt-1.5 w-64 bg-white border border-zinc-200 rounded-xl shadow-xl z-30 p-1.5 text-left animate-in fade-in zoom-in-95 duration-100">
+                                            <span className="block text-[10px] font-bold text-zinc-400 uppercase tracking-wider px-2 py-1">
+                                                Select Student Profile
+                                            </span>
+                                            {studentProfiles.map((p) => (
+                                                <button
+                                                    key={p.id}
+                                                    type="button"
+                                                    onClick={() => handleStudentDemo(p.id)}
+                                                    className="w-full text-left p-2 rounded-lg hover:bg-emerald-50/70 transition flex flex-col cursor-pointer group"
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs font-bold text-zinc-900 group-hover:text-emerald-900">
+                                                            {p.name}
+                                                        </span>
+                                                        <span className="text-[10px] font-semibold text-zinc-500 bg-zinc-100 group-hover:bg-emerald-100 group-hover:text-emerald-800 px-1.5 py-0.5 rounded">
+                                                            {p.hostel}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[10px] text-zinc-500 font-mono mt-0.5">
+                                                        Roll: {p.rollNo} &bull; {p.dept}
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => handleDemo("warden")}

@@ -3,12 +3,26 @@ import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import StatusBadge from "../components/StatusBadge";
 import api from "../services/api";
-import { PlusCircle, History, Clock, MapPin, AlertCircle, XCircle, ExternalLink, CheckCircle2 } from "lucide-react";
+import {
+    PlusCircle,
+    History,
+    Clock,
+    MapPin,
+    AlertCircle,
+    XCircle,
+    ExternalLink,
+    CheckCircle2,
+    Zap,
+    Moon,
+    Home,
+    AlertTriangle,
+} from "lucide-react";
 
 const StudentDashboard = () => {
     const [activePass, setActivePass] = useState(null);
     const [loading, setLoading] = useState(true);
     const [cancelLoading, setCancelLoading] = useState(false);
+    const [demoCreating, setDemoCreating] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
@@ -27,6 +41,21 @@ const StudentDashboard = () => {
     useEffect(() => {
         fetchActivePass();
     }, []);
+
+    const handleDemoApply = async (preset) => {
+        setDemoCreating(true);
+        setError("");
+        setMessage("");
+        try {
+            const res = await api.post("/student/demo-apply", { preset });
+            setMessage(res.data?.message || "Demo outpass created successfully!");
+            setActivePass(res.data?.outpass || null);
+        } catch (err) {
+            setError(err.response?.data?.message || "Failed to create demo outpass.");
+        } finally {
+            setDemoCreating(false);
+        }
+    };
 
     const handleCancel = async (id) => {
         if (!window.confirm("Are you sure you want to cancel this pending outpass request?")) return;
@@ -94,21 +123,127 @@ const StudentDashboard = () => {
                     </div>
                 ) : !activePass ? (
                     /* Empty State */
-                    <div className="bg-white p-10 rounded-xl border border-zinc-200 text-center shadow-xs">
+                    <div className="bg-white p-6 sm:p-10 rounded-xl border border-zinc-200 text-center shadow-xs">
                         <div className="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-3">
                             <Clock className="w-6 h-6 text-zinc-400" />
                         </div>
                         <h3 className="text-base font-bold text-zinc-900 mb-1">No Active Outpass</h3>
                         <p className="text-xs text-zinc-500 max-w-sm mx-auto mb-5">
-                            You currently do not have any pending or approved outpasses. You can apply for a new pass anytime.
+                            You currently do not have any pending or approved outpasses. You can apply for a new pass or select a quick demo preset below for testing.
                         </p>
                         <Link
                             to="/apply"
                             className="inline-flex items-center gap-1.5 py-2.5 px-5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-bold text-xs transition"
                         >
                             <PlusCircle className="w-4 h-4" />
-                            Apply for Outpass
+                            Apply Custom Outpass
                         </Link>
+
+                        {/* 1-Click Demo Request Presets */}
+                        <div className="mt-8 pt-8 border-t border-zinc-200 text-left">
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+                                    <Zap className="w-3.5 h-3.5 text-amber-600" />
+                                    1-Click Demo Requests (For Testing End-to-End Flow)
+                                </span>
+                                <span className="text-[11px] text-zinc-500">
+                                    Transfers to Parent ──► Warden ──► Guard upon approval
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {/* Preset 1: Curfew Extension */}
+                                <button
+                                    type="button"
+                                    onClick={() => handleDemoApply("curfew_extension")}
+                                    disabled={demoCreating}
+                                    className="p-3.5 bg-zinc-50 hover:bg-amber-50/50 border border-zinc-200 hover:border-amber-300 rounded-xl text-left transition group cursor-pointer disabled:opacity-50"
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-xs font-bold text-zinc-900 group-hover:text-amber-900 transition flex items-center gap-1.5">
+                                            <Moon className="w-3.5 h-3.5 text-amber-600" />
+                                            Curfew Extension (11:15 PM)
+                                        </span>
+                                        <span className="text-[10px] font-semibold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
+                                            Curfew Rule
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-zinc-500 leading-relaxed">
+                                        Library study returning past 10:30 PM cutoff. Requires parent consent.
+                                    </p>
+                                </button>
+
+                                {/* Preset 2: Night Out */}
+                                <button
+                                    type="button"
+                                    onClick={() => handleDemoApply("night_out")}
+                                    disabled={demoCreating}
+                                    className="p-3.5 bg-zinc-50 hover:bg-purple-50/50 border border-zinc-200 hover:border-purple-300 rounded-xl text-left transition group cursor-pointer disabled:opacity-50"
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-xs font-bold text-zinc-900 group-hover:text-purple-900 transition flex items-center gap-1.5">
+                                            <Zap className="w-3.5 h-3.5 text-purple-600" />
+                                            Night Out (Overnight)
+                                        </span>
+                                        <span className="text-[10px] font-semibold text-purple-800 bg-purple-100 px-1.5 py-0.5 rounded">
+                                            Overnight
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-zinc-500 leading-relaxed">
+                                        IIT Hackathon event returning tomorrow morning 8:00 AM.
+                                    </p>
+                                </button>
+
+                                {/* Preset 3: Weekend Home */}
+                                <button
+                                    type="button"
+                                    onClick={() => handleDemoApply("weekend_home")}
+                                    disabled={demoCreating}
+                                    className="p-3.5 bg-zinc-50 hover:bg-emerald-50/50 border border-zinc-200 hover:border-emerald-300 rounded-xl text-left transition group cursor-pointer disabled:opacity-50"
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-xs font-bold text-zinc-900 group-hover:text-emerald-900 transition flex items-center gap-1.5">
+                                            <Home className="w-3.5 h-3.5 text-emerald-600" />
+                                            Weekend Home Visit (2 Days)
+                                        </span>
+                                        <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                                            Multi-Day
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-zinc-500 leading-relaxed">
+                                        Family visit returning Sunday 8:00 PM. Requires parent authorization.
+                                    </p>
+                                </button>
+
+                                {/* Preset 4: Emergency */}
+                                <button
+                                    type="button"
+                                    onClick={() => handleDemoApply("emergency")}
+                                    disabled={demoCreating}
+                                    className="p-3.5 bg-zinc-50 hover:bg-rose-50/50 border border-zinc-200 hover:border-rose-300 rounded-xl text-left transition group cursor-pointer disabled:opacity-50"
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-xs font-bold text-zinc-900 group-hover:text-rose-900 transition flex items-center gap-1.5">
+                                            <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
+                                            Emergency Medical Leave
+                                        </span>
+                                        <span className="text-[10px] font-semibold text-rose-800 bg-rose-100 px-1.5 py-0.5 rounded">
+                                            Urgent
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-zinc-500 leading-relaxed">
+                                        Urgent clinic visit and doctor consultation with medical document proof.
+                                    </p>
+                                </button>
+                            </div>
+
+                            {demoCreating && (
+                                <div className="mt-3 text-center text-xs text-zinc-500 flex items-center justify-center gap-2">
+                                    <div className="w-3 h-3 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin"></div>
+                                    Generating demo outpass...
+                                </div>
+                            )}
+                        </div>
                     </div>
                 ) : (
                     /* Active Pass Card */

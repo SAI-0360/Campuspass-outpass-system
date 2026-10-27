@@ -287,3 +287,97 @@ export const cancelOutpass = async (req, res) => {
         });
     }
 };
+
+/**
+ * @desc    Create a pre-configured demo outpass request for instant evaluator testing
+ * @route   POST /api/student/demo-apply
+ * @access  Private (Student only)
+ */
+export const applyDemoOutpass = async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const { preset } = req.body;
+
+        // Ensure student does not have an active outpass
+        const existingActivePass = await Outpass.findOne({
+            student: studentId,
+            status: { $in: ["AWAITING_PARENT", "PENDING", "APPROVED", "EXITED"] },
+        });
+
+        if (existingActivePass) {
+            return res.status(400).json({
+                success: false,
+                message: `You already have an active outpass (Status: ${existingActivePass.status}). Please complete or cancel it before creating a new demo request.`,
+                activePassId: existingActivePass._id,
+            });
+        }
+
+        const now = new Date();
+        const depDate = new Date(now.getTime() + 15 * 60 * 1000); // in 15 mins
+        let retDate = new Date(now);
+        let outpassType = "curfew_extension";
+        let destination = "City Central Library (Demo)";
+        let reason = "Late semester examination research and group study [Demo Request]";
+
+        if (preset === "night_out") {
+            outpassType = "night_out";
+            retDate = new Date(now.getTime() + 20 * 3600 * 1000); // tomorrow morning
+            destination = "IIT Delhi Campus (Demo)";
+            reason = "Participating in overnight inter-college software hackathon [Demo Request]";
+        } else if (preset === "weekend_home") {
+            outpassType = "weekend_home";
+            retDate = new Date(now.getTime() + 48 * 3600 * 1000); // 2 days later
+            destination = "Family Residence, South Delhi (Demo)";
+            reason = "Weekend family visit and festival stay [Demo Request]";
+        } else if (preset === "emergency") {
+            outpassType = "emergency";
+            retDate = new Date(now.getTime() + 5 * 3600 * 1000);
+            destination = "Apollo Specialty Clinic (Demo)";
+            reason = "Urgent medical doctor consultation and prescription review [Demo Request]";
+        } else {
+            // Default: curfew_extension past 10:30 PM cutoff
+            outpassType = "curfew_extension";
+            retDate.setHours(23, 15, 0, 0); // 11:15 PM today
+            if (now.getHours() >= 23 && now.getMinutes() >= 15) {
+                retDate.setDate(retDate.getDate() + 1);
+            }
+        }
+
+        const parentConsentToken = crypto.randomBytes(16).toString("hex");
+        const finalParentPhone = req.user.studentProfile?.parentPhone || "9811223344";
+        const finalParentEmail = req.user.studentProfile?.parentEmail || "parent@campuspass.edu";
+
+        const newOutpass = await Outpass.create({
+            student: studentId,
+            outpassType,
+            departureTime: depDate,
+            expectedReturnTime: retDate,
+            destination,
+            reason,
+            isCurfewExtension: true,
+            parentEmail: finalParentEmail,
+            parentPhone: finalParentPhone,
+            proofDocument: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=600&auto=format&fit=crop&q=80",
+            parentConsent: {
+                status: "PENDING",
+                token: parentConsentToken,
+                verifiedPhone: finalParentPhone,
+            },
+            status: "AWAITING_PARENT",
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: `Demo outpass created successfully (${outpassType.replace("_", " ")}). Awaiting parent authorization.`,
+            outpass: newOutpass,
+            parentConsentToken,
+            parentConsentUrl: `/parent-consent/${parentConsentToken}`,
+        });
+    } catch (error) {
+        console.error("Apply Demo Outpass Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || "Failed to create demo outpass",
+        });
+    }
+};

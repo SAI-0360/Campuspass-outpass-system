@@ -1,6 +1,7 @@
 import express from "express";
 import {
     applyOutpass,
+    applyDemoOutpass,
     getMyOutpasses,
     getActivePass,
     cancelOutpass,
@@ -17,6 +18,7 @@ const router = express.Router();
 router.use(isAuthenticated, authorizeRoles("student"));
 
 router.post("/apply", uploadSingle.single("proofDocument"), applyOutpass);
+router.post("/demo-apply", applyDemoOutpass);
 router.get("/my-outpasses", getMyOutpasses);
 router.get("/active-pass", getActivePass);
 router.patch("/:id/cancel", cancelOutpass);

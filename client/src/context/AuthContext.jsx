@@ -36,8 +36,8 @@ export const AuthProvider = ({ children }) => {
         return res.data;
     };
 
-    const demoLogin = async (role) => {
-        const res = await api.post("/auth/demo-login", { role });
+    const demoLogin = async (role, profileId) => {
+        const res = await api.post("/auth/demo-login", { role, profileId });
         if (res.data?.user) {
             setUser(res.data.user);
         }

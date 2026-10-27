@@ -24,6 +24,9 @@ lerna-debug.log*
 dist/
 build/
 
+# Scratch & Test Scripts
+scratch/
+
 # OS files
 .DS_Store
 Thumbs.db
