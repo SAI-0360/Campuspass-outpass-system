@@ -22,9 +22,11 @@ connectDB();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+const clientOrigin = (process.env.CLIENT_URL || "http://localhost:5175").replace(/\/+$/, "");
+
 app.use(
     cors({
-        origin: process.env.CLIENT_URL || "http://localhost:5175",
+        origin: clientOrigin,
         credentials: true,
     })
 );
