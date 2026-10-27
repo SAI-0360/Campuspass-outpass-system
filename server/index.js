@@ -6,6 +6,7 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import studentRoutes from "./routes/student.routes.js";
 import wardenRoutes from "./routes/warden.routes.js";
+import guardRoutes from "./routes/guard.routes.js";
 import { notFound, errorHandler } from "./middlewares/error.middleware.js";
 
 dotenv.config();
@@ -40,6 +41,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/warden", wardenRoutes);
+app.use("/api/guard", guardRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);
