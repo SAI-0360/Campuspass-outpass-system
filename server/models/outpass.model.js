@@ -44,7 +44,7 @@ const outpassSchema = new mongoose.Schema(
         passCode: {
             type: String,
             unique: true,
-            index: true,
+            sparse: true,
             trim: true,
         },
         student: {

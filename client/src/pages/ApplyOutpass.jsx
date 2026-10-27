@@ -5,14 +5,20 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { AlertCircle, ArrowLeft, Upload, Clock } from "lucide-react";
 
+// Helper to format Date into local YYYY-MM-DDTHH:mm string for datetime-local input
+const toLocalISOString = (date) => {
+    const tzOffsetMs = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - tzOffsetMs).toISOString().slice(0, 16);
+};
+
 const ApplyOutpass = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
 
-    // Default departure: right now; return: 4 hours from now
+    // Default departure: 10 mins from now; return: 4 hours from now in local time
     const now = new Date();
-    const defaultDep = new Date(now.getTime() + 10 * 60 * 1000).toISOString().slice(0, 16);
-    const defaultRet = new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString().slice(0, 16);
+    const defaultDep = toLocalISOString(new Date(now.getTime() + 10 * 60 * 1000));
+    const defaultRet = toLocalISOString(new Date(now.getTime() + 4 * 60 * 60 * 1000));
 
     const [form, setForm] = useState({
         outpassType: "day_out",
@@ -28,6 +34,17 @@ const ApplyOutpass = () => {
     const [isCurfew, setIsCurfew] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+
+    // Sync parent contact info when user profile loads
+    useEffect(() => {
+        if (user?.studentProfile) {
+            setForm((prev) => ({
+                ...prev,
+                parentPhone: prev.parentPhone || user.studentProfile.parentPhone || "",
+                parentEmail: prev.parentEmail || user.studentProfile.parentEmail || "",
+            }));
+        }
+    }, [user]);
 
     // Live 10:30 PM Curfew Detection
     useEffect(() => {
