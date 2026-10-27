@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import studentRoutes from "./routes/student.routes.js";
+import wardenRoutes from "./routes/warden.routes.js";
 import { notFound, errorHandler } from "./middlewares/error.middleware.js";
 
 dotenv.config();
@@ -38,6 +39,7 @@ app.get("/api/health", (req, res) => {
 // Mount Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/student", studentRoutes);
+app.use("/api/warden", wardenRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);
