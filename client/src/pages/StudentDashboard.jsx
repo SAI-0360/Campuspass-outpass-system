@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import StatusBadge from "../components/StatusBadge";
 import api from "../services/api";
-import { PlusCircle, History, Clock, MapPin, AlertCircle, XCircle } from "lucide-react";
+import { PlusCircle, History, Clock, MapPin, AlertCircle, XCircle, ExternalLink, CheckCircle2 } from "lucide-react";
 
 const StudentDashboard = () => {
     const [activePass, setActivePass] = useState(null);
@@ -139,9 +139,60 @@ const StudentDashboard = () => {
                             )}
                         </div>
 
+                        {/* Stage 1: Awaiting Parent Authorization */}
+                        {activePass.status === "AWAITING_PARENT" && (
+                            <div className="bg-amber-50 border-b border-amber-200 p-4 sm:p-5">
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <div>
+                                        <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+                                            <Clock className="w-4 h-4 text-amber-700" />
+                                            Stage 1 of 2: Awaiting Parent Authorization
+                                        </div>
+                                        <p className="text-xs text-amber-800 mt-1">
+                                            Verification link dispatched to parent (
+                                            <span className="font-semibold">{activePass.parentPhone || "Registered Contact"}</span>
+                                            ). The Warden cannot review this request until parental consent is granted.
+                                        </p>
+                                    </div>
+                                    {activePass.parentConsent?.token && (
+                                        <a
+                                            href={`/parent-consent/${activePass.parentConsent.token}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs rounded-lg shadow-xs transition"
+                                        >
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                            Open Parent Consent Portal
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Stage 2: Parent Authorized */}
+                        {activePass.parentConsent?.status === "APPROVED" && (
+                            <div className="bg-emerald-50 border-b border-emerald-200 px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-emerald-800 font-medium">
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                    <span>
+                                        Parent Consent Verified on{" "}
+                                        {new Date(activePass.parentConsent.verifiedAt).toLocaleString("en-IN", {
+                                            dateStyle: "medium",
+                                            timeStyle: "short",
+                                        })}
+                                    </span>
+                                </div>
+                                {activePass.parentConsent.parentRemarks && (
+                                    <span className="text-[11px] italic text-emerald-700">
+                                        "{activePass.parentConsent.parentRemarks}"
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
                         {/* Curfew alert banner */}
                         {activePass.isCurfewExtension && (
-                            <div className="bg-amber-50 border-b border-amber-200 px-6 py-2.5 flex items-center gap-2 text-xs text-amber-800 font-medium">
+                            <div className="bg-amber-50/50 border-b border-amber-200 px-6 py-2.5 flex items-center gap-2 text-xs text-amber-800 font-medium">
                                 <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
                                 <span>Curfew Extension Pass (Past 10:30 PM entry cutoff). Parent contact logged.</span>
                             </div>
@@ -195,8 +246,8 @@ const StudentDashboard = () => {
                                 </div>
                             )}
 
-                            {/* Action to cancel if pending */}
-                            {activePass.status === "PENDING" && (
+                            {/* Action to cancel if pending or awaiting parent */}
+                            {(activePass.status === "PENDING" || activePass.status === "AWAITING_PARENT") && (
                                 <div className="pt-2 border-t border-zinc-200 flex justify-end">
                                     <button
                                         onClick={() => handleCancel(activePass._id)}

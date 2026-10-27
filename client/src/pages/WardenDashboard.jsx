@@ -302,7 +302,21 @@ const WardenDashboard = () => {
                                     )}
                                 </div>
 
-                                {/* Parent info for Curfew passes */}
+                                {/* Parent info & Consent for Curfew passes */}
+                                {item.parentConsent?.status === "APPROVED" && (
+                                    <div className="bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 text-xs mb-3 text-emerald-900 flex flex-wrap items-center justify-between gap-2">
+                                        <div className="flex items-center gap-1.5 font-bold">
+                                            <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                            Parent Consent Verified ({new Date(item.parentConsent.verifiedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })})
+                                        </div>
+                                        {item.parentConsent.parentRemarks && (
+                                            <div className="text-[11px] italic text-emerald-800">
+                                                "{item.parentConsent.parentRemarks}"
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 {item.isCurfewExtension && (
                                     <div className="bg-amber-50/70 p-2.5 rounded-lg border border-amber-200 text-xs mb-3 text-amber-900 flex flex-wrap gap-4">
                                         <div>
@@ -358,6 +372,20 @@ const WardenDashboard = () => {
                             Student: {reviewModal.outpass?.student?.name} (
                             {reviewModal.outpass?.student?.studentProfile?.rollNo})
                         </p>
+
+                        {reviewModal.outpass?.parentConsent?.status === "APPROVED" && (
+                            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-900">
+                                <span className="font-bold block">✅ Parent Consent Verified</span>
+                                <span className="text-[11px] text-emerald-800 block">
+                                    Verified on {new Date(reviewModal.outpass.parentConsent.verifiedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                                </span>
+                                {reviewModal.outpass.parentConsent.parentRemarks && (
+                                    <span className="text-[11px] italic block mt-1 text-emerald-700">
+                                        Parent Note: "{reviewModal.outpass.parentConsent.parentRemarks}"
+                                    </span>
+                                )}
+                            </div>
+                        )}
 
                         <form onSubmit={handleConfirmReview}>
                             <div className="mb-4">

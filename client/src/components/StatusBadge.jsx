@@ -2,11 +2,18 @@ import React from "react";
 
 const StatusBadge = ({ status, wasLate, lateMinutes }) => {
     switch (status) {
-        case "PENDING":
+        case "AWAITING_PARENT":
             return (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                     <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                    Pending Approval
+                    Awaiting Parent Consent
+                </span>
+            );
+        case "PENDING":
+            return (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                    <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                    Pending Warden Review
                 </span>
             );
         case "APPROVED":
