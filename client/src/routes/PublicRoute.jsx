@@ -17,6 +17,9 @@ const PublicRoute = ({ children }) => {
         if (user.role === "warden") {
             return <Navigate to="/warden" replace />;
         }
+        if (user.role === "guard") {
+            return <Navigate to="/guard" replace />;
+        }
         return <Navigate to="/dashboard" replace />;
     }
 
